@@ -11,6 +11,11 @@ you can use docker to build the container (in docker subfolder) under linux with
 Or just untar the karaf assembly (in corresponding assembly/target folder)
 
 # Usage
+Starting the context: In directory where you untared the assembly:
+```
+DSContext-assembly-1.0.0-SNAPSHOT/bin/start-context
+```
+
 Store a test object
 ```
 curl -X POST \
