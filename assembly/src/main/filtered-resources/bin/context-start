@@ -1,0 +1,122 @@
+#!/bin/bash
+#
+# prerequisites:
+#   curl
+#   jq (json command line processor)
+#
+
+this=$0
+karaf_dir="`dirname $this`/.."
+etc_dir=${karaf_dir}/etc
+bin_dir=${karaf_dir}/bin
+
+# given a config key, read it and return it unencoded
+function readConfigByKey {
+    baseUrl=$1
+    key=$2
+    url="$baseUrl/v1/kv/$key"
+    # echo reading $url
+
+    curl -X GET "$url?raw"
+}
+
+# given a key, read all keys under that key and return them
+function readConfigKeys {
+    baseUrl=$1
+    key=$2
+    url="$baseUrl/v1/kv/$key"
+    # echo reading $url
+
+    curl -X GET "$url?keys" | jq -c ".[]" | sed -e 's/"//g'
+}
+
+function assertVariables {
+    for var in $@; do
+        # echo "variable $var: ${!var}"
+        if [ -z "${!var}" ]; then
+            echo "Please provide the environment parameter '$var'"
+            exit -1
+        fi
+    done
+}
+
+# copy config to etc folder
+if [ ! -z "${CONSUL_URL}" ]; then
+    echo "trying to get configurations from ${CONSUL_URL}"
+
+    # here CONSUL_CONFIG_KEY has to be set (either development, staging, production, ...)
+    if [ -z "$CONSUL_CONFIG_KEY" ]; then
+        echo "if CONSUL_URL is given, CONSUL_CONFIG_KEY must be given as well"
+        exit -1
+    fi
+
+    # read all configs to be placed in etc directory
+    folder="com/brodos/isaac/${CONSUL_CONFIG_KEY}/etc/"
+    keys=`readConfigKeys $CONSUL_URL $folder`
+    echo "Got keys: $keys"
+
+    for k in $keys; do
+        if [ ! "x$k" == "x$folder" ]; then
+            filename=${k:`expr length ${folder}`} # substr
+            echo "reading ${filename}"
+            ds=`readConfigByKey $CONSUL_URL "$k"`
+            echo "$ds" > ${etc_dir}/$filename
+        fi
+    done
+fi
+
+# uncomment if database configuration is provided
+# assertVariables DATABASE_USER DATABASE_PASSWORD DATABASE_URL
+
+# write datasource config file
+# adjust accordingly to meet you needs
+if [ ! -z "$DATABASE_URL" ] ; then
+    assertVariables DATABASE_USER DATABASE_PASSWORD DATABASE_NAME
+    cat > ${etc_dir}/org.ops4j.datasource-DSContext.cfg <<END
+osgi.jdbc.driver.name = mariadb
+dataSourceName = DSContext
+databaseName = ${DATABASE_NAME}
+ops4j.preHook=DSContext
+user = ${DATABASE_USER}
+password = ${DATABASE_PASSWORD}
+pool = aries
+xa = true
+#jdbc.pool.maxTotal = 200
+#jdbc.pool.maxWaitMillis = 400
+#jdbc.pool.blockWhenExhausted = true
+#jdbc.pool.testOnBorrow = true
+url = ${DATABASE_URL}
+END
+fi
+
+# write domain config file
+cat > ${etc_dir}/com.brodos.ds.cfg <<END
+some.feature=true
+END
+
+# AppDynamics integration. Activate by setting environment variable USE_APPDYNAMICS to 1.
+# This expects the local directory appdynamics-agent to exist
+if [ ! -z "${USE_APPDYNAMICS}" ] && [ -d "appdynamics-agent" ]; then
+    assertVariables APPDYNAMICS_CONTROLLER_HOST_NAME APPDYNAMICS_CONTROLLER_PORT APPDYNAMICS_AGENT_TIER_NAME APPDYNAMICS_AGENT_APPLICATION_NAME
+
+    cat > ${etc_dir}/custom.properties <<END
+org.osgi.framework.bootdelegation = \
+    com.sun.*, \
+    javax.transaction, \
+    javax.transaction.*, \
+    javax.xml.crypto, \
+    javax.xml.crypto.*, \
+    sun.*, \
+    org.apache.karaf.jaas.boot, \
+    org.apache.karaf.jaas.boot.principal, \
+    com.singularity, \
+    com.singularity.*
+END
+
+    echo 'export KARAF_OPTS="${KARAF_OPTS} -javaagent:'${karaf_dir}'/appdynamics-agent/javaagent.jar"' >> ${bin_dir}/setenv
+    echo 'export APPDYNAMICS_AGENT_NODE_NAME=${HOSTNAME}' >> ${bin_dir}/setenv
+fi
+
+# remove pid from previous start
+rm -f ${karaf_dir}/instances/instance.properties
+${karaf_dir}/bin/karaf ${KARAF_OPTS} $@

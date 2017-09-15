@@ -1,0 +1,9 @@
+Export-Package: \
+  com.brodos.ds.domain.service, \
+  com.brodos.ds.domain.entity, \
+  com.brodos.ds.domain.persistence, \
+  com.brodos.ds.domain.model.qualifiers.Main
+DynamicImport-Package: \
+    org.hibernate.proxy, \
+    javassist.util.proxy, \
+    *

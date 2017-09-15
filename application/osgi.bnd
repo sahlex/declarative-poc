@@ -1,0 +1,3 @@
+#Require-Capability: \
+#    osgi.cdi.extension; filter:="(osgi.cdi.extension=pax-cdi-extension)", \
+#    osgi.extender; filter:="(osgi.extender=pax.cdi)"

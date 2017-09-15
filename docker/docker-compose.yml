@@ -1,0 +1,13 @@
+version: '2'
+services:
+    context-service:
+        image: "brodos/${imageName}:${version}"
+        build:
+            context: .
+            args:
+                - ASSEMBLY=${finalName}
+        ports:
+            - "8181:8181"
+            - "5005:5005"
+        command: /srv/karaf/bin/${scriptname} debug
+

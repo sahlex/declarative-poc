@@ -1,0 +1,12 @@
+
+<html>
+    <head></head>
+    <body>
+        <h1>Articles</h1>
+        <table>
+#foreach($article in $articles)
+            <tr><td>${article.id}</td><td>${article.name}</td></tr>
+#end
+        </table>
+    </body>
+</html>
