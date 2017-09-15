@@ -1,4 +1,1 @@
-Import-Package: \
-    org.osgi.service.transaction.control;version=0.0.3
-
 -removeheaders Import-Service, Export-Service, Require-Capability

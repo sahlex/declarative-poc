@@ -15,16 +15,18 @@
  */
 package com.brodos.ds.persistence.h2;
 
-import com.brodos.ds.domain.entity.Article;
-import com.brodos.ds.domain.persistence.TestRepository;
 import java.util.List;
+
+import javax.persistence.EntityManager;
 import javax.persistence.TypedQuery;
+
 import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ServiceScope;
-import org.osgi.service.transaction.control.TransactionControl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.brodos.ds.domain.entity.Article;
+import com.brodos.ds.domain.persistence.TestRepository;
 
 /**
  *
@@ -35,22 +37,20 @@ public class TestRepositoryImpl extends AbstractRepositoryBase implements TestRe
 
     private static final Logger LOG = LoggerFactory.getLogger(TestRepositoryImpl.class);
 
-    @Reference
-    TransactionControl txControl;
-
     @Override
     public Article findArticleById(String id) {
-        return em.find(Article.class, id);
+        return getEntityManager().find(Article.class, id);
     }
 
     @Override
     public List<Article> getAllArticles() {
-        TypedQuery<Article> q = em.createQuery("from Article a", Article.class);
+        TypedQuery<Article> q = getEntityManager().createQuery("from Article a", Article.class);
         return q.getResultList();
     }
 
     @Override
     public Article store(Article article) {
+    	EntityManager em = getEntityManager();
         em.persist(article);
         em.flush();
 
