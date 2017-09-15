@@ -1,0 +1,6 @@
+/core/target/
+/infrastructure/target/
+/service/target/
+/application/target/
+/features/target/
+/assembly/target/

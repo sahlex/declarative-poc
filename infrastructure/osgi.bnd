@@ -1,3 +1,7 @@
+Meta-Persistence: \
+    META-INF/persistence.xml
+Import-Package: \
+    com.brodos.ds.domain.entity
 Export-Package: \
     com.brodos.ds.persistence.liquibase
 
