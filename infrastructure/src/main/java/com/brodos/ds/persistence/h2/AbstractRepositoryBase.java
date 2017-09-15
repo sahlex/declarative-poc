@@ -5,13 +5,12 @@
  */
 package com.brodos.ds.persistence.h2;
 
-import java.util.HashMap;
 import javax.persistence.EntityManager;
+
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Reference;
-import org.osgi.service.jpa.EntityManagerFactoryBuilder;
 import org.osgi.service.transaction.control.TransactionControl;
-import org.osgi.service.transaction.control.jpa.JPAEntityManagerProviderFactory;
+import org.osgi.service.transaction.control.jpa.JPAEntityManagerProvider;
 
 /**
  *
@@ -19,24 +18,13 @@ import org.osgi.service.transaction.control.jpa.JPAEntityManagerProviderFactory;
  */
 abstract public class AbstractRepositoryBase {
 
-    protected JPAEntityManagerProviderFactory providerFactory;
-    protected EntityManagerFactoryBuilder emfBuilder;
-    protected EntityManager em;
+    private JPAEntityManagerProvider provider;
+    private EntityManager em;
     private TransactionControl txControl;
 
-//    @Reference(target = "(osgi.unit.name=DSContext)")
-//    public void setEmf(EntityManagerFactory emf) {
-//        this.emf = emf;
-//    }
-
-    @Reference
-    public void setProviderFactory(JPAEntityManagerProviderFactory providerFactory) {
-        this.providerFactory = providerFactory;
-    }
-
     @Reference(target = "(osgi.unit.name=DSContext)")
-    public void setProviderManagerFactoryBuilder(EntityManagerFactoryBuilder emfBuilder) {
-        this.emfBuilder = emfBuilder;
+    public void setProviderFactory(JPAEntityManagerProvider provider) {
+        this.provider = provider;
     }
 
     @Reference
@@ -46,10 +34,7 @@ abstract public class AbstractRepositoryBase {
 
     @Activate
     void start() {
-//        em = providerFactory
-        em = providerFactory.getProviderFor(emfBuilder, new HashMap<>(), null).getResource(txControl);
-//        txControl.getCurrentContext().
-        // em = providerFactory.getProviderFor(emf, null).getResource(txControl);
+        em = provider.getResource(txControl);
     }
 
     protected EntityManager getEntityManager() {

@@ -1,3 +1,6 @@
+Meta-Persistence: \
+    META-INF/persistence.xml
+
 Export-Package: \
   com.brodos.ds.domain.service, \
   com.brodos.ds.domain.entity, \
